@@ -108,7 +108,6 @@ Card = {
   index, cardType: 'normal'|'effect'|'fusion',   // 抽選 50/35/15%(config定数)
   species: 'ドラゴン族' など21種からランダム,
   modes: { [round]: 'continue'|'new' },          // effect: R5-7 / fusion: R7 (開始時に50%で確定)
-  effectNumbers: { [round]: 2|3|4 },             // 新効果の付与番号(開始時に確定・一貫管理)
   nameFirst, nameSecond,                          // R1, R2
   attribute('闇'|'光'|'地'|'水'|'炎'|'風'), level(1-12), atk, def(0-9999),  // R3
   texts: { 4:str, 5:str, 6:str, 7:str },          // R4-7 (fusionの4,5は素材名)
@@ -192,7 +191,7 @@ Player = { id(ランダム16hex), token(セッショントークン, 192bit base
 
 `gameSpec.roundSpecFor(card, round)` が種別×ラウンドから工程仕様(kind/タイトル/説明/上限/モード/新効果番号/直前ラベル)を一元生成し、サーバーの検証・クライアントのUI・結果画面のクレジット役割名すべてがこれを参照する。
 
-- 結合規則: 通常=R4〜7を改行連結 / 効果=続きモードは無改行連結・新効果モードは改行+「②：」等の番号付与(新効果が1つでもあれば先頭効果に「①：」付与) / 融合=素材「A」＋「B」、効果はR6+R7をモードに従い結合。番号はゲーム開始時に確定した `effectNumbers` を一貫使用。
+- 結合規則: 通常=R4〜7を改行連結 / 効果=続きモードは無改行連結・新効果モードは改行連結(①②等の番号は付与しない) / 融合=素材「A」＋「B」、効果はR6+R7をモードに従い結合(番号なし)。
 
 ## 14. Canvasの描画・Undo・塗りつぶしの設計
 

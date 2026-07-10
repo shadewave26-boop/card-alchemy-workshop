@@ -214,7 +214,6 @@ async function scenarioA() {
           // 効果モンスター: R5〜7には続き/新効果モードが必ずある
           if (r >= 5 && r <= 7) {
             assert(rs.spec.mode === 'continue' || rs.spec.mode === 'new', `R${r} モードあり(${rs.spec.mode})`);
-            if (rs.spec.mode === 'new') assert(!!rs.spec.effectNumber, `R${r} 新効果番号の提示`);
           }
           if (r === 2 && idx === 0 && !checkedErrors) {
             checkedErrors = true;
@@ -257,6 +256,7 @@ async function scenarioA() {
       for (const r of [4, 5, 6, 7]) {
         assert(card.bodyText.includes(rec[r]), `効果テキストに断片R${r}を含む`);
       }
+      assert(!/[①②③④]/.test(card.bodyText), '効果テキストに番号が付与されない');
       const credits = results.credits[card.index];
       assertEq(credits.length, 8, 'クレジット8工程');
       assertEq(credits[0].role, 'カード名・前半', 'クレジット役割名(R1)');

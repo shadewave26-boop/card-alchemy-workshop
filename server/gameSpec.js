@@ -12,21 +12,14 @@ export function buildCard(index) {
   const cardType = forced || weightedPick(config.cardTypeWeights);
   const species = pick(SPECIES);
 
-  // 続き／新効果モード（ゲーム中は不変）。新効果の番号もここで一貫して確定する。
+  // 続き／新効果モード（ゲーム中は不変）
   const modes = {};
-  const effectNumbers = {};
   if (cardType === 'effect') {
-    let n = 1; // ラウンド4の効果が①
     for (const r of [5, 6, 7]) {
       modes[r] = Math.random() < 0.5 ? MODES.NEW : MODES.CONTINUE;
-      if (modes[r] === MODES.NEW) {
-        n += 1;
-        effectNumbers[r] = n;
-      }
     }
   } else if (cardType === 'fusion') {
     modes[7] = Math.random() < 0.5 ? MODES.NEW : MODES.CONTINUE;
-    if (modes[7] === MODES.NEW) effectNumbers[7] = 2;
   }
 
   return {
@@ -34,7 +27,6 @@ export function buildCard(index) {
     cardType,
     species,
     modes,
-    effectNumbers,
     nameFirst: '',
     nameSecond: '',
     attribute: null,
@@ -127,11 +119,10 @@ export function roundSpecFor(card, round) {
         prevLabel: `効果テキスト${CIRCLED[round - 5]}`,
       };
     }
-    const num = CIRCLED[card.effectNumbers[round] - 1];
     return {
-      ...base, mode, effectNumber: num,
-      description: `新しい効果を書き始めてください。この効果には自動で「${num}」の番号が付きます。`,
-      placeholder: `効果${num}の内容`,
+      ...base, mode,
+      description: '新しい効果を書き始めてください。（直前の効果とは改行で区切られます）',
+      placeholder: '新しい効果の内容',
       prevLabel: `効果テキスト${CIRCLED[round - 5]}`,
     };
   }
@@ -170,7 +161,11 @@ export function roundSpecFor(card, round) {
   if (mode === MODES.CONTINUE) {
     return { ...base7, description: '直前の効果文の続きを書いてください。（改行せずにつながります）' };
   }
-  return { ...base7, effectNumber: '②', description: '新しい効果②を書き始めてください。', placeholder: '効果②の内容' };
+  return {
+    ...base7,
+    description: '新しい効果を書き始めてください。（直前の効果とは改行で区切られます）',
+    placeholder: '新しい効果の内容',
+  };
 }
 
 /**
@@ -190,33 +185,26 @@ export function visibleFor(card, round) {
   }
 }
 
-/** 効果モンスター: 続き=無改行連結 / 新効果=改行+番号付与 */
+/** 効果モンスター: 続き=無改行連結 / 新効果=改行連結（番号は付けない） */
 function joinEffectTexts(card) {
-  const hasNew = [5, 6, 7].some((r) => card.modes[r] === MODES.NEW);
   let out = card.texts[4] || '';
-  if (out && hasNew) out = '①：' + out;
   for (const r of [5, 6, 7]) {
     const t = card.texts[r];
     if (!t) continue;
     if (card.modes[r] === MODES.CONTINUE) {
       out = out ? out + t : t;
     } else {
-      const label = `${CIRCLED[card.effectNumbers[r] - 1]}：`;
-      out = out ? `${out}\n${label}${t}` : label + t;
+      out = out ? `${out}\n${t}` : t;
     }
   }
   return out;
 }
 
-/** 融合モンスター: R6+R7の効果を続き/新効果モードで結合 */
+/** 融合モンスター: R6+R7の効果を続き/新効果モードで結合（番号は付けない） */
 function joinFusionTexts(card) {
   const a = card.texts[6] || '';
   const b = card.texts[7] || '';
-  if (card.modes[7] === MODES.NEW) {
-    const first = a ? '①：' + a : '';
-    const second = b ? '②：' + b : '';
-    return [first, second].filter(Boolean).join('\n');
-  }
+  if (card.modes[7] === MODES.NEW) return [a, b].filter(Boolean).join('\n');
   return a + b;
 }
 

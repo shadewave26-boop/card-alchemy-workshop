@@ -124,9 +124,6 @@ function TextInput({ round, api, urgent, busy, onSubmit }) {
           完成予想：<strong>{(round.visible.nameFirst || '') + val || '（？？？）'}</strong>
         </p>
       )}
-      {spec.effectNumber && (
-        <p className="effect-number-note">この効果には <strong>{spec.effectNumber}</strong> が自動で付きます</p>
-      )}
       {spec.input === 'line' ? (
         <input
           className="text-input"
