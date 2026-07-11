@@ -557,8 +557,17 @@ body {
 
 /* ---------- お絵かき ---------- */
 
-/* イラスト工程(R8): 長押しでのテキスト選択・iOSのコールアウトを無効化して描画を妨げない
-   （この工程にテキスト入力欄は無いため、画面全体に適用して問題ない） */
+/* イラスト工程(R8): 長押しでのテキスト選択・iOSのコールアウトを無効化して描画を妨げない。
+   ヘッダーのタイトルやアイコンも選択されないよう、bodyに付与するno-selectで
+   ページ全体（ヘッダー・トースト含む）を対象にする。
+   （この工程にテキスト入力欄は無いため、全体に適用して問題ない） */
+body.no-select,
+body.no-select * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
 .game-round.is-drawing,
 .game-round.is-drawing * {
   -webkit-user-select: none;

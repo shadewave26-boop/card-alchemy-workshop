@@ -329,6 +329,14 @@ export default function GameRound({ api, round, progress }) {
   // イラスト工程では長押しによるテキスト選択が描画の妨げになるため無効化する
   const drawingClass = spec.input === 'drawing' ? 'is-drawing' : '';
 
+  // ヘッダー（タイトル・アイコン）など工程画面の外側も含め、
+  // イラスト工程の間はページ全体を選択不可にする
+  useEffect(() => {
+    if (spec.input !== 'drawing') return undefined;
+    document.body.classList.add('no-select');
+    return () => document.body.classList.remove('no-select');
+  }, [spec.input]);
+
   return (
     <div className={`game-round ${drawingClass}`}>
       {/* stickyヘッダー: キーボード表示中も工程と残り時間が見える */}
