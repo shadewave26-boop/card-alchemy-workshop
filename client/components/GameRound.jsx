@@ -326,9 +326,11 @@ export default function GameRound({ api, round, progress }) {
 
   const { spec } = round;
   const typeClass = `type-${round.cardType}`;
+  // イラスト工程では長押しによるテキスト選択が描画の妨げになるため無効化する
+  const drawingClass = spec.input === 'drawing' ? 'is-drawing' : '';
 
   return (
-    <div className="game-round">
+    <div className={`game-round ${drawingClass}`}>
       {/* stickyヘッダー: キーボード表示中も工程と残り時間が見える */}
       <div className="round-header">
         <div className="round-meta">

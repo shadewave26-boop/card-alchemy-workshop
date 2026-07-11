@@ -556,6 +556,15 @@ body {
 @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-6px); opacity: 1; } }
 
 /* ---------- お絵かき ---------- */
+
+/* イラスト工程(R8): 長押しでのテキスト選択・iOSのコールアウトを無効化して描画を妨げない
+   （この工程にテキスト入力欄は無いため、画面全体に適用して問題ない） */
+.game-round.is-drawing,
+.game-round.is-drawing * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 .draw-canvas-wrap {
   width: min(360px, 100%);
   margin: 0 auto;

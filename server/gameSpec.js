@@ -4,13 +4,18 @@
 
 import { CARD_TYPES, SPECIES, MODES, CIRCLED, LIMITS } from '../shared/constants.js';
 import { config } from './config.js';
-import { weightedPick, pick } from './util.js';
+import { weightedPick } from './util.js';
+
+// 種族の抽選テーブル（configの重み指定を反映。未指定は1.0）
+const SPECIES_WEIGHTS = Object.fromEntries(
+  SPECIES.map((s) => [s, config.speciesWeights[s] ?? 1])
+);
 
 /** ゲーム開始時にカード1枚分のテーマ（種別・種族・続き/新効果モード）を確定する */
 export function buildCard(index) {
   const forced = CARD_TYPES.includes(config.forceCardType) ? config.forceCardType : null;
   const cardType = forced || weightedPick(config.cardTypeWeights);
-  const species = pick(SPECIES);
+  const species = weightedPick(SPECIES_WEIGHTS);
 
   // 続き／新効果モード（ゲーム中は不変）
   const modes = {};
