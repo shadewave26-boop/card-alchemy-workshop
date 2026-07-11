@@ -121,7 +121,7 @@ export function roundSpecFor(card, round) {
     }
     return {
       ...base, mode,
-      description: '新しい効果を書き始めてください。（直前の効果とは改行で区切られます）',
+      description: '新しい効果を書き始めてください。',
       placeholder: '新しい効果の内容',
       prevLabel: `効果テキスト${CIRCLED[round - 5]}`,
     };
@@ -185,27 +185,14 @@ export function visibleFor(card, round) {
   }
 }
 
-/** 効果モンスター: 続き=無改行連結 / 新効果=改行連結（番号は付けない） */
+/** 効果モンスター: 全断片を改行せずそのまま連結（番号も改行も入れない） */
 function joinEffectTexts(card) {
-  let out = card.texts[4] || '';
-  for (const r of [5, 6, 7]) {
-    const t = card.texts[r];
-    if (!t) continue;
-    if (card.modes[r] === MODES.CONTINUE) {
-      out = out ? out + t : t;
-    } else {
-      out = out ? `${out}\n${t}` : t;
-    }
-  }
-  return out;
+  return [4, 5, 6, 7].map((r) => card.texts[r] || '').join('');
 }
 
-/** 融合モンスター: R6+R7の効果を続き/新効果モードで結合（番号は付けない） */
+/** 融合モンスター: R6+R7の効果を改行せず連結 */
 function joinFusionTexts(card) {
-  const a = card.texts[6] || '';
-  const b = card.texts[7] || '';
-  if (card.modes[7] === MODES.NEW) return [a, b].filter(Boolean).join('\n');
-  return a + b;
+  return (card.texts[6] || '') + (card.texts[7] || '');
 }
 
 /** 全8ラウンドの成果を1枚のカードデータへ組み立てる */
@@ -226,8 +213,8 @@ export function assembleCard(card) {
   };
 
   if (card.cardType === 'normal') {
-    // フレーバーは読みやすいように改行で結合
-    base.bodyText = [4, 5, 6, 7].map((r) => card.texts[r]).filter(Boolean).join('\n')
+    // フレーバーも全断片を改行なしで連結
+    base.bodyText = [4, 5, 6, 7].map((r) => card.texts[r] || '').join('')
       || '……その姿を見た者は少なく、多くは語られていない。';
   } else if (card.cardType === 'effect') {
     base.bodyText = joinEffectTexts(card) || '（この効果は謎に包まれている）';

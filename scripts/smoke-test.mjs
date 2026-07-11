@@ -257,6 +257,7 @@ async function scenarioA() {
         assert(card.bodyText.includes(rec[r]), `効果テキストに断片R${r}を含む`);
       }
       assert(!/[①②③④]/.test(card.bodyText), '効果テキストに番号が付与されない');
+      assertEq(card.bodyText, [4, 5, 6, 7].map((r) => rec[r]).join(''), '効果テキストは改行なしで連結');
       const credits = results.credits[card.index];
       assertEq(credits.length, 8, 'クレジット8工程');
       assertEq(credits[0].role, 'カード名・前半', 'クレジット役割名(R1)');
@@ -461,7 +462,7 @@ async function scenarioC() {
     for (const card of results.cards) {
       const rec = record[card.index];
       assertEq(card.cardType, 'normal', '通常固定');
-      assertEq(card.bodyText, [4, 5, 6, 7].map((r) => rec[r]).join('\n'), 'フレーバーは改行結合');
+      assertEq(card.bodyText, [4, 5, 6, 7].map((r) => rec[r]).join(''), 'フレーバーは改行なしで連結');
       assert(!card.materialsText, '通常カードに融合素材なし');
     }
 
