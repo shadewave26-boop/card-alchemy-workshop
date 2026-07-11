@@ -65,8 +65,8 @@ npm start       # Express + Socket.io + dist/ を1プロセスで起動
 | `REDIS_URL` | – | Redis接続先。未設定ならメモリ管理 |
 | `ROOM_TTL_SECONDS` | 7200 | ルーム自動破棄までの秒数（最終アクセス起点） |
 | `MAX_PLAYERS` | 4 | 最大参加人数（上限4） |
-| `TEXT_ROUND_SECONDS` | 30 | テキスト工程の制限時間 |
-| `DRAWING_ROUND_SECONDS` | 120 | イラスト工程の制限時間 |
+| `TEXT_ROUND_SECONDS` | 90 | テキスト工程（ラウンド1〜7）の制限時間 |
+| `DRAWING_ROUND_SECONDS` | 150 | イラスト工程（ラウンド8）の制限時間 |
 | `MAX_IMAGE_BYTES` | 1500000 | イラストPNGの最大サイズ |
 | `NAME_JOIN_SPACE` | 0 | 1にするとカード名の前半と後半の間に空白を挿入 |
 | `FORCE_CARD_TYPE` | – | 【開発専用】カード種別の固定 |

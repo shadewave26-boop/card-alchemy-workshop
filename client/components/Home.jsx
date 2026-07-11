@@ -127,7 +127,7 @@ export default function Home({ api, joinCode }) {
           <li>見えるのは<strong>直前の工程だけ</strong>。時間切れは自動提出！</li>
           <li>最後に完成カードをみんなで1枚ずつ鑑賞して大団円</li>
         </ol>
-        <p className="howto-note">テキスト30秒／イラスト120秒。スマホだけで遊べます。</p>
+        <p className="howto-note">テキスト1分30秒／イラスト2分30秒。スマホだけで遊べます。</p>
       </details>
     </div>
   );

@@ -21,8 +21,8 @@ export const config = {
   minPlayers: 2,
   maxPlayers: Math.min(4, Math.max(2, num(process.env.MAX_PLAYERS, 4))),
 
-  textRoundSeconds: num(process.env.TEXT_ROUND_SECONDS, 30),
-  drawingRoundSeconds: num(process.env.DRAWING_ROUND_SECONDS, 120),
+  textRoundSeconds: num(process.env.TEXT_ROUND_SECONDS, 90),
+  drawingRoundSeconds: num(process.env.DRAWING_ROUND_SECONDS, 150),
 
   maxImageBytes: num(process.env.MAX_IMAGE_BYTES, 1_500_000),
 
