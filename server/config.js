@@ -29,8 +29,8 @@ export const config = {
   // カード名 前半+後半 の間に空白を入れるか（仕様§9 設定可能項目）
   nameJoinSpace: process.env.NAME_JOIN_SPACE === '1',
 
-  // カード種別の選出確率（通常 > 効果 > 融合。合計1になるように）
-  cardTypeWeights: { normal: 0.5, effect: 0.35, fusion: 0.15 },
+  // カード種別の選出確率（通常 = 魔法 > 効果 > 融合。合計1になるように）
+  cardTypeWeights: { normal: 0.3, spell: 0.3, effect: 0.25, fusion: 0.15 },
 
   // 種族の抽選重み。未記載の種族は1.0。
   // 魚族・海竜族は出にくくし、その分ほかの種族（ドラゴン族・魔法使い族・戦士族など）が

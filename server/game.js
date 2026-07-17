@@ -1,7 +1,7 @@
 // ゲームエンジン: ラウンド進行・タイマー・提出・自動提出・結果発表。
 // すべての状態遷移はサーバー(このモジュール)を正とする。
 
-import { S2C, TOTAL_ROUNDS, MODES } from '../shared/constants.js';
+import { S2C, TOTAL_ROUNDS, MODES, SPELL_KINDS } from '../shared/constants.js';
 import { config } from './config.js';
 import {
   buildCard, roundDurationSeconds, roundSpecFor, visibleFor,
@@ -76,6 +76,7 @@ function roundStatePayload(room, playerIdx) {
     cardNo: ci + 1,
     cardType: card.cardType,
     species: card.species,
+    spellKind: card.spellKind ?? null, // 魔法カード: R3確定後は常時表示するシステム情報
     spec: roundSpecFor(card, g.round),
     visible: visibleFor(card, g.round),
     draft: g.drafts[g.round]?.[ci] ?? null,
@@ -340,6 +341,8 @@ function strictValue(kind, v) {
       return typeof v === 'string' ? cleanText(v, 120) : null;
     case 'stats':
       return validStats(v);
+    case 'spellKind':
+      return SPELL_KINDS.includes(v) ? v : null;
     case 'drawing':
       return validImage(v, config.maxImageBytes);
     default:
@@ -361,6 +364,8 @@ function draftValue(kind, v) {
       return typeof v === 'string' ? cleanText(v, 120) : undefined;
     case 'stats':
       return sanitizeStatsDraft(v);
+    case 'spellKind':
+      return SPELL_KINDS.includes(v) ? v : undefined;
     case 'drawing':
       return validImage(v, config.maxImageBytes) ?? undefined;
     default:
@@ -382,6 +387,8 @@ function autoValue(kind, draft) {
       return cleanText(draft ?? '', 120);
     case 'stats':
       return sanitizeStats(draft);
+    case 'spellKind':
+      return SPELL_KINDS.includes(draft) ? draft : '通常';
     case 'drawing':
       return validImage(draft, config.maxImageBytes) || whitePngDataUrl();
     default:
@@ -393,6 +400,7 @@ function applySubmission(card, round, kind, value) {
   switch (kind) {
     case 'nameFirst': card.nameFirst = value; break;
     case 'nameSecond': card.nameSecond = value; break;
+    case 'spellKind': card.spellKind = value; break;
     case 'stats':
       card.attribute = value.attribute;
       card.level = value.level;
@@ -484,6 +492,7 @@ function botValue(kind) {
         atk: Math.floor(Math.random() * 31) * 100,
         def: Math.floor(Math.random() * 31) * 100,
       });
+    case 'spellKind': return pick(SPELL_KINDS);
     case 'drawing': return botDoodleDataUrl();
     default: return pick(BOT_POOL.text);
   }

@@ -15,11 +15,12 @@ const SPECIES_WEIGHTS = Object.fromEntries(
 export function buildCard(index) {
   const forced = CARD_TYPES.includes(config.forceCardType) ? config.forceCardType : null;
   const cardType = forced || weightedPick(config.cardTypeWeights);
-  const species = weightedPick(SPECIES_WEIGHTS);
+  // 魔法カードに種族は無い（種類はラウンド3の担当者が選択する）
+  const species = cardType === 'spell' ? null : weightedPick(SPECIES_WEIGHTS);
 
   // 続き／新効果モード（ゲーム中は不変）
   const modes = {};
-  if (cardType === 'effect') {
+  if (cardType === 'effect' || cardType === 'spell') {
     for (const r of [5, 6, 7]) {
       modes[r] = Math.random() < 0.5 ? MODES.NEW : MODES.CONTINUE;
     }
@@ -31,6 +32,7 @@ export function buildCard(index) {
     index,
     cardType,
     species,
+    spellKind: null, // 魔法カードのみラウンド3で確定
     modes,
     nameFirst: '',
     nameSecond: '',
@@ -79,6 +81,14 @@ export function roundSpecFor(card, round) {
     };
   }
   if (round === 3) {
+    if (t === 'spell') {
+      return {
+        kind: 'spellKind', input: 'spellKind',
+        title: '魔法の種類',
+        description: '完成したカード名に合う魔法カードの種類を選びましょう。',
+        prevLabel: '完成したカード名',
+      };
+    }
     return {
       kind: 'stats', input: 'stats',
       title: 'ステータス',
@@ -107,14 +117,16 @@ export function roundSpecFor(card, round) {
     };
   }
 
-  if (t === 'effect') {
+  if (t === 'effect' || t === 'spell') {
     const i = round - 3; // 1..4
     const base = {
       kind: 'effect', input: 'multiline', maxLength: LIMITS.textMax,
       title: `効果テキスト${CIRCLED[i - 1]}`,
     };
     if (round === 4) {
-      return { ...base, description: 'このモンスターの最初の効果テキストを書きましょう。', prevLabel: 'ステータス' };
+      return t === 'spell'
+        ? { ...base, description: 'この魔法カードの最初の効果テキストを書きましょう。', prevLabel: '魔法の種類' }
+        : { ...base, description: 'このモンスターの最初の効果テキストを書きましょう。', prevLabel: 'ステータス' };
     }
     const mode = card.modes[round];
     if (mode === MODES.CONTINUE) {
@@ -182,7 +194,10 @@ export function visibleFor(card, round) {
     case 1: return {};
     case 2: return { nameFirst: card.nameFirst || '' };
     case 3: return { name: fullName(card) };
-    case 4: return { stats: { attribute: card.attribute, level: card.level, atk: card.atk, def: card.def } };
+    case 4:
+      // 魔法カード: ラウンド3の成果物は「魔法の種類」
+      if (card.cardType === 'spell') return { spellKind: card.spellKind || '通常' };
+      return { stats: { attribute: card.attribute, level: card.level, atk: card.atk, def: card.def } };
     case 5: case 6: case 7:
       return { prevText: card.texts[round - 1] || '' };
     case 8: return { card: assembleCard(card) }; // 最終ラウンドは全情報
@@ -202,20 +217,28 @@ function joinFusionTexts(card) {
 
 /** 全8ラウンドの成果を1枚のカードデータへ組み立てる */
 export function assembleCard(card) {
+  const isSpell = card.cardType === 'spell';
   const base = {
     index: card.index,
     no: card.index + 1,
     cardType: card.cardType,
     species: card.species,
-    name: fullName(card) || '名もなきモンスター',
-    attribute: card.attribute || '闇',
-    level: card.level ?? 4,
-    atk: card.atk ?? 0,
-    def: card.def ?? 0,
+    spellKind: isSpell ? card.spellKind || '通常' : null,
+    name: fullName(card) || (isSpell ? '名もなき魔法' : '名もなきモンスター'),
+    // 魔法カードに属性・レベル・ATK・DEFは無い
+    attribute: isSpell ? null : card.attribute || '闇',
+    level: isSpell ? null : card.level ?? 4,
+    atk: isSpell ? null : card.atk ?? 0,
+    def: isSpell ? null : card.def ?? 0,
     image: card.image || null,
     materialsText: null,
     bodyText: '',
   };
+
+  if (isSpell) {
+    base.bodyText = joinEffectTexts(card) || '（この効果は謎に包まれている）';
+    return base;
+  }
 
   if (card.cardType === 'normal') {
     // フレーバーも全断片を改行なしで連結
@@ -236,11 +259,11 @@ export function assembleCard(card) {
 export function roleName(cardType, round) {
   if (round === 1) return 'カード名・前半';
   if (round === 2) return 'カード名・後半';
-  if (round === 3) return 'ステータス';
+  if (round === 3) return cardType === 'spell' ? '魔法の種類' : 'ステータス';
   if (round === 8) return 'イラスト';
   const i = round - 4; // 0..3
   if (cardType === 'normal') return `フレーバーテキスト${CIRCLED[i]}`;
-  if (cardType === 'effect') return `効果テキスト${CIRCLED[i]}`;
+  if (cardType === 'effect' || cardType === 'spell') return `効果テキスト${CIRCLED[i]}`;
   // fusion
   if (round === 4) return '融合素材①';
   if (round === 5) return '融合素材②';

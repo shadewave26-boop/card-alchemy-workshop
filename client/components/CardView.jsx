@@ -9,6 +9,7 @@ const ATTR_CLASS = { 闇: 'dark', 光: 'light', 地: 'earth', 水: 'water', 炎:
 const TYPE_SHORT = { normal: '通常', effect: '効果', fusion: '融合' };
 
 export default function CardView({ card, width = 320, animate = false }) {
+  const isSpell = card.cardType === 'spell';
   const nameLen = [...(card.name || '')].length;
   const nameSize = nameLen > 16 ? 0.62 : nameLen > 11 ? 0.78 : 1;
   const level = Math.max(1, Math.min(12, card.level ?? 1));
@@ -21,14 +22,25 @@ export default function CardView({ card, width = 320, animate = false }) {
       <div className="tcg-inner">
         <div className="tcg-head">
           <div className="tcg-name" style={{ fontSize: `${nameSize}em` }}>{card.name}</div>
-          <div className={`tcg-attr attr-${ATTR_CLASS[card.attribute] || 'dark'}`}>{card.attribute}</div>
+          {isSpell ? (
+            <div className="tcg-attr attr-spell">魔</div>
+          ) : (
+            <div className={`tcg-attr attr-${ATTR_CLASS[card.attribute] || 'dark'}`}>{card.attribute}</div>
+          )}
         </div>
 
-        <div className="tcg-stars" style={{ fontSize: level > 8 ? '0.66em' : '0.85em' }}>
-          {Array.from({ length: level }, (_, i) => (
-            <span key={i} className="tcg-star">★</span>
-          ))}
-        </div>
+        {isSpell ? (
+          /* 魔法カード: レベル(★)の位置に種類を右寄せ表記 */
+          <div className="tcg-stars">
+            <span className="tcg-spelltype">【魔法カード／{card.spellKind}】</span>
+          </div>
+        ) : (
+          <div className="tcg-stars" style={{ fontSize: level > 8 ? '0.66em' : '0.85em' }}>
+            {Array.from({ length: level }, (_, i) => (
+              <span key={i} className="tcg-star">★</span>
+            ))}
+          </div>
+        )}
 
         <div className="tcg-art">
           {card.image ? (
@@ -39,13 +51,18 @@ export default function CardView({ card, width = 320, animate = false }) {
         </div>
 
         <div className="tcg-box">
-          <div className="tcg-species">【{card.species}／{TYPE_SHORT[card.cardType] || '通常'}】</div>
+          {/* 魔法カード: 種族行・ATK/DEF行は表示しない（種類はレベル行に表記済み） */}
+          {!isSpell && (
+            <div className="tcg-species">【{card.species}／{TYPE_SHORT[card.cardType] || '通常'}】</div>
+          )}
           {card.materialsText && <div className="tcg-materials">{card.materialsText}</div>}
           <div className="tcg-text pre-wrap">{card.bodyText}</div>
-          <div className="tcg-atkdef">
-            <span>ATK/{card.atk}</span>
-            <span>DEF/{card.def}</span>
-          </div>
+          {!isSpell && (
+            <div className="tcg-atkdef">
+              <span>ATK/{card.atk}</span>
+              <span>DEF/{card.def}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

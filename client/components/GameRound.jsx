@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CARD_TYPE_LABEL, ATTRIBUTES, LIMITS } from '../../shared/constants.js';
+import { CARD_TYPE_LABEL, ATTRIBUTES, SPELL_KINDS, LIMITS } from '../../shared/constants.js';
 import { useServerCountdown } from '../hooks.js';
 import { sfx, unlockAudio } from '../audio.js';
 import DrawingCanvas from './DrawingCanvas.jsx';
@@ -42,6 +42,15 @@ function VisiblePanel({ round }) {
     );
   }
   if (round.round === 4) {
+    // 魔法カード: ラウンド3の成果物は「魔法の種類」
+    if (visible.spellKind) {
+      return (
+        <div className="prev-panel">
+          <p className="prev-label">決定した魔法の種類</p>
+          <p className="prev-text prev-name">【魔法カード／{visible.spellKind}】</p>
+        </div>
+      );
+    }
     const s = visible.stats || {};
     return (
       <div className="prev-panel">
@@ -69,19 +78,66 @@ function VisiblePanel({ round }) {
 /** ラウンド8用: 完成カードの全情報 */
 function FullCardInfo({ card }) {
   if (!card) return null;
+  const isSpell = card.cardType === 'spell';
   return (
     <div className="prev-panel fullinfo">
       <p className="prev-label">完成したカード情報（これを参考に描こう！）</p>
       <p className="fullinfo-name">{card.name}</p>
-      <div className="stats-grid-view">
-        <span className={`attr-chip attr-${ATTR_CLASS[card.attribute] || 'dark'}`}>{card.attribute}</span>
-        <span>{'★'.repeat(Math.min(card.level, 12))}</span>
-        <span>ATK/{card.atk}</span>
-        <span>DEF/{card.def}</span>
-      </div>
-      <p className="fullinfo-species">【{card.species}】</p>
+      {isSpell ? (
+        <p className="fullinfo-species">【魔法カード／{card.spellKind}】</p>
+      ) : (
+        <>
+          <div className="stats-grid-view">
+            <span className={`attr-chip attr-${ATTR_CLASS[card.attribute] || 'dark'}`}>{card.attribute}</span>
+            <span>{'★'.repeat(Math.min(card.level, 12))}</span>
+            <span>ATK/{card.atk}</span>
+            <span>DEF/{card.def}</span>
+          </div>
+          <p className="fullinfo-species">【{card.species}】</p>
+        </>
+      )}
       {card.materialsText && <p className="fullinfo-materials">{card.materialsText}</p>}
       <p className="prev-text pre-wrap fullinfo-body">{card.bodyText}</p>
+    </div>
+  );
+}
+
+/** ラウンド3(魔法カード): 魔法の種類の選択 */
+function SpellKindInput({ round, api, busy, onSubmit }) {
+  const [kind, setKind] = useState(
+    typeof round.draft === 'string' && SPELL_KINDS.includes(round.draft) ? round.draft : '通常'
+  );
+
+  // 選択をdebounceして下書き保存（時間切れ時は最新の選択が自動提出される）
+  useEffect(() => {
+    const h = setTimeout(() => {
+      api.sendDraft(round.round, round.cardIndex, kind);
+    }, 300);
+    return () => clearTimeout(h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind]);
+
+  return (
+    <div className="input-area">
+      <p className="field-label">魔法の種類</p>
+      <div className="kind-row" role="radiogroup" aria-label="魔法の種類">
+        {SPELL_KINDS.map((k) => (
+          <button
+            key={k}
+            type="button"
+            role="radio"
+            aria-checked={kind === k}
+            className={`kind-chip ${kind === k ? 'is-selected' : ''}`}
+            onClick={() => { sfx.tap(); setKind(k); }}
+          >
+            {k}
+          </button>
+        ))}
+      </div>
+      <p className="kind-note">カードには 【魔法カード／{kind}】 と表記されます</p>
+      <button type="button" className="btn btn-primary btn-block" disabled={busy} onClick={() => onSubmit(kind)}>
+        {busy ? '送信中…' : 'これで提出する'}
+      </button>
     </div>
   );
 }
@@ -354,7 +410,12 @@ export default function GameRound({ api, round, progress }) {
       <div className="round-body">
         <div className="card-meta-row">
           <span className="card-no">カード No.{round.cardNo}</span>
-          <span className="species-chip">{round.species}</span>
+          {round.cardType === 'spell' ? (
+            /* 魔法カード: 種族の代わりに魔法の種類（R3で決定するまでは？？？） */
+            <span className="species-chip">魔法／{round.spellKind || '？？？'}</span>
+          ) : (
+            <span className="species-chip">{round.species}</span>
+          )}
         </div>
 
         <h2 className="round-title">{spec.title}</h2>
@@ -369,6 +430,8 @@ export default function GameRound({ api, round, progress }) {
           <Waiting progress={progress} remainMs={remainMs} />
         ) : spec.input === 'stats' ? (
           <StatsInput key={round.round} round={round} api={api} busy={busy} onSubmit={submit} />
+        ) : spec.input === 'spellKind' ? (
+          <SpellKindInput key={round.round} round={round} api={api} busy={busy} onSubmit={submit} />
         ) : spec.input === 'drawing' ? (
           <DrawingInput key={round.round} round={round} api={api} busy={busy} remainMs={remainMs} onSubmit={submit} />
         ) : (

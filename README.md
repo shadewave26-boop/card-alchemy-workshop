@@ -39,7 +39,7 @@ npm run dev
 ```bash
 TEXT_ROUND_SECONDS=5
 DRAWING_ROUND_SECONDS=15
-FORCE_CARD_TYPE=fusion   # normal / effect / fusion を固定（開発時のみ有効）
+FORCE_CARD_TYPE=fusion   # normal / effect / fusion / spell を固定（開発時のみ有効）
 ```
 
 開発モード（`NODE_ENV != production`）ではロビーに**「テスト用CPUを追加」**ボタンが表示され、1人でも全フローを確認できます。これらの開発機能は本番では自動的に無効になります。

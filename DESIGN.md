@@ -105,9 +105,10 @@ Room = {
 
 ```js
 Card = {
-  index, cardType: 'normal'|'effect'|'fusion',   // 抽選 50/35/15%(config定数)
-  species: 'ドラゴン族' など21種からランダム,
-  modes: { [round]: 'continue'|'new' },          // effect: R5-7 / fusion: R7 (開始時に50%で確定)
+  index, cardType: 'normal'|'effect'|'fusion'|'spell',   // 抽選 30/25/15/30%(config定数)
+  species: 'ドラゴン族' など21種からランダム(spellはnull),
+  spellKind: '通常'|'装備'|'永続'|'速攻'|'フィールド',   // spellのみ。R3の担当者が選択
+  modes: { [round]: 'continue'|'new' },          // effect/spell: R5-7 / fusion: R7 (開始時に50%で確定)
   nameFirst, nameSecond,                          // R1, R2
   attribute('闇'|'光'|'地'|'水'|'炎'|'風'), level(1-12), atk, def(0-9999),  // R3
   texts: { 4:str, 5:str, 6:str, 7:str },          // R4-7 (fusionの4,5は素材名)
@@ -131,6 +132,8 @@ Player = { id(ランダム16hex), token(セッショントークン, 192bit base
 | 1 | nameFirst | string | 〜16文字 |
 | 2 | nameSecond | string | 〜16文字 |
 | 3 | stats | {attribute, level, atk, def} | 属性6種 / 1-12 / 0-9999 |
+| 3 魔法 | spellKind | string | 通常/装備/永続/速攻/フィールド |
+| 4-7 魔法 | effect | string | 〜120文字 (R5-7は続き/新効果モード付き) |
 | 4-7 通常 | flavor | string | 〜120文字 |
 | 4-7 効果 | effect | string | 〜120文字 (R5-7は続き/新効果モード付き) |
 | 4,5 融合 | material | string | 〜24文字 |

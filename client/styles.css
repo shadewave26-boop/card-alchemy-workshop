@@ -364,6 +364,7 @@ body {
 .type-chip.type-normal { background: #d3b96e; }
 .type-chip.type-effect { background: #c07a45; color: #fff7e8; }
 .type-chip.type-fusion { background: #a385c6; color: #fff7e8; }
+.type-chip.type-spell { background: #9fbf8f; }
 
 .progress-track {
   height: 5px;
@@ -497,6 +498,7 @@ body {
 
 .attr-chip.is-selected { border-color: #fff; box-shadow: 0 0 0 3px rgba(216, 180, 90, 0.6); }
 
+.attr-spell { background: radial-gradient(circle at 35% 30%, #8fd9a8, #1d7a4e); }
 .attr-dark { background: radial-gradient(circle at 35% 30%, #6a4a9e, #2c1b4e); }
 .attr-light { background: radial-gradient(circle at 35% 30%, #ffe9a3, #c99f2a); color: #4a3808; text-shadow: none; }
 .attr-earth { background: radial-gradient(circle at 35% 30%, #b98d5f, #6b4a26); }
@@ -506,6 +508,32 @@ body {
 
 .atkdef-row { display: flex; gap: 12px; }
 .atkdef-row > div { flex: 1; }
+
+/* 魔法の種類の選択ボタン（R3・魔法カード） */
+.kind-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+
+.kind-chip {
+  min-height: 48px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border);
+  background: rgba(216, 180, 90, 0.08);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  font-family: var(--sans);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.kind-chip.is-selected {
+  background: rgba(159, 191, 143, 0.25);
+  border-color: #9fbf8f;
+  color: #d9ecd0;
+  box-shadow: 0 0 0 2px rgba(159, 191, 143, 0.45);
+}
+
+.kind-note { font-size: 13px; color: var(--text-dim); margin: 8px 0 0; }
 
 .timeup-note { text-align: center; color: #ffcf5c; font-size: 14px; margin-top: 12px; }
 
@@ -672,10 +700,11 @@ body.no-select * {
   box-shadow: inset 0 0 0.55em rgba(60, 38, 8, 0.45);
 }
 
-/* 種別カラー: 通常=ベージュ / 効果=オレンジブラウン / 融合=紫 */
+/* 種別カラー: 通常=ベージュ / 効果=オレンジブラウン / 融合=紫 / 魔法=薄い緑 */
 .type-normal .tcg-inner { background: linear-gradient(168deg, #d6bd72, #bd9c4b 55%, #a8873c); }
 .type-effect .tcg-inner { background: linear-gradient(168deg, #c07a45, #a95f2d 55%, #96521f); }
 .type-fusion .tcg-inner { background: linear-gradient(168deg, #a385c6, #8a63a8 55%, #77519a); }
+.type-spell .tcg-inner { background: linear-gradient(168deg, #b7cfa9, #9cba8c 55%, #87a677); }
 
 /* 名前バー: 枠色の上に載る半透明のエンボス板 */
 .tcg-head {
@@ -738,6 +767,16 @@ body.no-select * {
   line-height: 1;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
+}
+
+/* 魔法カード: レベル(★)位置の【魔法カード／○○】表記（右寄せ） */
+.tcg-spelltype {
+  font-size: 0.72em;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  color: #23301c;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 /* イラスト: 左右に枠色の余白を残した額装風の窓 */

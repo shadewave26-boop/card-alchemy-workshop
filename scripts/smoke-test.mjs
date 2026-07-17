@@ -473,10 +473,94 @@ async function scenarioC() {
 }
 
 // ================================================================
+// シナリオD: 2人・魔法カード固定
+//   R3=種類選択・種族なし・R4の公開情報・ATK/DEF/レベルなし・クレジット役割名
+// ================================================================
+async function scenarioD() {
+  console.log('--- シナリオD: 2人 / 魔法カード ---');
+  const port = 3104;
+  const server = startServer(port, { TEXT_ROUND_SECONDS: '20', DRAWING_ROUND_SECONDS: '20', FORCE_CARD_TYPE: 'spell' });
+  try {
+    await waitServer(port);
+    const c1 = new TC(port, 'D1');
+    c1.emit(C2S.CREATE, { name: 'ホスト' });
+    const created = await c1.wait(S2C.CREATED);
+    const c2 = new TC(port, 'D2');
+    c2.emit(C2S.JOIN, { code: created.code, name: 'ゲスト' });
+    await c2.wait(S2C.JOINED);
+    await c1.wait(S2C.ROOM_STATE, (p) => p.players.length === 2);
+    c1.emit(C2S.START);
+
+    const clients = [c1, c2];
+    const KINDS = ['装備', '速攻']; // カードindexごとに選ぶ種類
+    const record = { 0: {}, 1: {} };
+
+    for (let r = 1; r <= 8; r++) {
+      const states = await Promise.all(
+        clients.map((c) => c.wait(S2C.ROUND_STATE, (p) => p.round === r, 15000, `D round ${r}`))
+      );
+      for (let idx = 0; idx < clients.length; idx++) {
+        const rs = states[idx];
+        const ci = rs.cardIndex;
+        assertEq(rs.cardType, 'spell', `R${r} 魔法カード`);
+        assertEq(rs.species, null, `R${r} 魔法カードに種族なし`);
+        let v;
+        if (r === 3) {
+          assertEq(rs.spec.kind, 'spellKind', 'R3は魔法の種類の選択');
+          assert(typeof rs.visible.name === 'string', 'R3で完成カード名が見える');
+          v = KINDS[ci];
+        } else if (r === 4) {
+          assertEq(rs.visible.spellKind, KINDS[ci], 'R4で決定した種類が見える');
+          assert(rs.visible.stats === undefined, 'R4にステータス情報は無い');
+          assertEq(rs.spellKind, KINDS[ci], 'R3確定後は種類が常時表示情報に含まれる');
+          v = `V${r}C${ci}`;
+        } else if (r >= 5 && r <= 7) {
+          assert(rs.spec.mode === 'continue' || rs.spec.mode === 'new', `R${r} 続き/新効果モードあり`);
+          assertEq(rs.visible.prevText, record[ci][r - 1], `R${r} 直前テキストのみ表示`);
+          v = `V${r}C${ci}`;
+        } else if (r === 8) {
+          assertEq(rs.visible.card.spellKind, KINDS[ci], 'R8 全情報に魔法の種類');
+          assertEq(rs.visible.card.atk, null, 'R8 ATKなし');
+          v = png;
+        } else {
+          v = `V${r}C${ci}`; // R1, R2
+        }
+        if (r >= 4 && r <= 7) record[ci][r] = v;
+        clients[idx].emit(C2S.SUBMIT, { round: r, cardIndex: ci, value: v });
+      }
+      await Promise.all(
+        clients.map((c) => c.wait(S2C.SUBMITTED, (p) => p.round === r, 15000, `D submitted ${r}`))
+      );
+    }
+
+    const results = await c1.wait(S2C.RESULTS, () => true, 15000, 'D results');
+    for (const card of results.cards) {
+      const rec = record[card.index];
+      assertEq(card.cardType, 'spell', '魔法カード固定');
+      assertEq(card.spellKind, KINDS[card.index], '選択した魔法の種類');
+      assertEq(card.species, null, '種族なし');
+      assertEq(card.attribute, null, '属性なし');
+      assertEq(card.level, null, 'レベルなし');
+      assertEq(card.atk, null, 'ATKなし');
+      assertEq(card.def, null, 'DEFなし');
+      assertEq(card.bodyText, [4, 5, 6, 7].map((r) => rec[r]).join(''), '効果テキストは無改行連結');
+      const credits = results.credits[card.index];
+      assertEq(credits[2].role, '魔法の種類', '魔法クレジットR3');
+      assertEq(credits[3].role, '効果テキスト①', '魔法クレジットR4');
+      assertEq(credits[6].role, '効果テキスト④', '魔法クレジットR7');
+    }
+    c1.close(); c2.close();
+  } finally {
+    server.kill();
+  }
+}
+
+// ================================================================
 try {
   await scenarioA();
   await scenarioB();
   await scenarioC();
+  await scenarioD();
 } catch (err) {
   failed++;
   console.error('✗ シナリオ実行エラー:', err.message);
