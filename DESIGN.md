@@ -105,9 +105,10 @@ Room = {
 
 ```js
 Card = {
-  index, cardType: 'normal'|'effect'|'fusion'|'spell',   // 抽選 30/25/15/30%(config定数)
-  species: 'ドラゴン族' など21種からランダム(spellはnull),
+  index, cardType: 'normal'|'effect'|'fusion'|'spell'|'trap', // 抽選 25/20/15/25/15%(config定数)
+  species: 'ドラゴン族' など21種からランダム(spell/trapはnull),
   spellKind: '通常'|'装備'|'永続'|'速攻'|'フィールド',   // spellのみ。R3の担当者が選択
+  trapKind: '通常'|'永続'|'カウンター',                  // trapのみ。R3の担当者が選択
   modes: { [round]: 'continue'|'new' },          // effect/spell: R5-7 / fusion: R7 (開始時に50%で確定)
   nameFirst, nameSecond,                          // R1, R2
   attribute('闇'|'光'|'地'|'水'|'炎'|'風'), level(1-12), atk, def(0-9999),  // R3

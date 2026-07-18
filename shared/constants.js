@@ -3,17 +3,21 @@
 
 export const TOTAL_ROUNDS = 8;
 
-export const CARD_TYPES = ['normal', 'effect', 'fusion', 'spell'];
+export const CARD_TYPES = ['normal', 'effect', 'fusion', 'spell', 'trap'];
 
 export const CARD_TYPE_LABEL = {
   normal: '通常モンスター',
   effect: '効果モンスター',
   fusion: '融合モンスター',
   spell: '魔法カード',
+  trap: '罠カード',
 };
 
 // 魔法カードの種類（ラウンド3の担当者が選択する）
 export const SPELL_KINDS = ['通常', '装備', '永続', '速攻', 'フィールド'];
+
+// 罠カードの種類（ラウンド3の担当者が選択する）
+export const TRAP_KINDS = ['通常', '永続', 'カウンター'];
 
 export const ATTRIBUTES = ['闇', '光', '地', '水', '炎', '風'];
 

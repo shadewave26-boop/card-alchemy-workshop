@@ -556,11 +556,90 @@ async function scenarioD() {
 }
 
 // ================================================================
+// シナリオE: 2人・罠カード固定（魔法カードと同方式のR3種類選択）
+// ================================================================
+async function scenarioE() {
+  console.log('--- シナリオE: 2人 / 罠カード ---');
+  const port = 3105;
+  const server = startServer(port, { TEXT_ROUND_SECONDS: '20', DRAWING_ROUND_SECONDS: '20', FORCE_CARD_TYPE: 'trap' });
+  try {
+    await waitServer(port);
+    const c1 = new TC(port, 'E1');
+    c1.emit(C2S.CREATE, { name: 'ホスト' });
+    const created = await c1.wait(S2C.CREATED);
+    const c2 = new TC(port, 'E2');
+    c2.emit(C2S.JOIN, { code: created.code, name: 'ゲスト' });
+    await c2.wait(S2C.JOINED);
+    await c1.wait(S2C.ROOM_STATE, (p) => p.players.length === 2);
+    c1.emit(C2S.START);
+
+    const clients = [c1, c2];
+    const KINDS = ['永続', 'カウンター'];
+    const record = { 0: {}, 1: {} };
+
+    for (let r = 1; r <= 8; r++) {
+      const states = await Promise.all(
+        clients.map((c) => c.wait(S2C.ROUND_STATE, (p) => p.round === r, 15000, `E round ${r}`))
+      );
+      for (let idx = 0; idx < clients.length; idx++) {
+        const rs = states[idx];
+        const ci = rs.cardIndex;
+        assertEq(rs.cardType, 'trap', `R${r} 罠カード`);
+        assertEq(rs.species, null, `R${r} 罠カードに種族なし`);
+        let v;
+        if (r === 3) {
+          assertEq(rs.spec.kind, 'trapKind', 'R3は罠の種類の選択');
+          assertEq(JSON.stringify(rs.spec.options), JSON.stringify(['通常', '永続', 'カウンター']), '罠の種類の選択肢');
+          v = KINDS[ci];
+        } else if (r === 4) {
+          assertEq(rs.visible.trapKind, KINDS[ci], 'R4で決定した種類が見える');
+          assert(rs.visible.stats === undefined, 'R4にステータス情報は無い');
+          assertEq(rs.trapKind, KINDS[ci], 'R3確定後は種類が常時表示情報に含まれる');
+          v = `V${r}C${ci}`;
+        } else if (r >= 5 && r <= 7) {
+          assert(rs.spec.mode === 'continue' || rs.spec.mode === 'new', `R${r} 続き/新効果モードあり`);
+          v = `V${r}C${ci}`;
+        } else if (r === 8) {
+          assertEq(rs.visible.card.trapKind, KINDS[ci], 'R8 全情報に罠の種類');
+          assertEq(rs.visible.card.atk, null, 'R8 ATKなし');
+          v = png;
+        } else {
+          v = `V${r}C${ci}`;
+        }
+        if (r >= 4 && r <= 7) record[ci][r] = v;
+        clients[idx].emit(C2S.SUBMIT, { round: r, cardIndex: ci, value: v });
+      }
+      await Promise.all(
+        clients.map((c) => c.wait(S2C.SUBMITTED, (p) => p.round === r, 15000, `E submitted ${r}`))
+      );
+    }
+
+    const results = await c1.wait(S2C.RESULTS, () => true, 15000, 'E results');
+    for (const card of results.cards) {
+      const rec = record[card.index];
+      assertEq(card.cardType, 'trap', '罠カード固定');
+      assertEq(card.trapKind, KINDS[card.index], '選択した罠の種類');
+      assertEq(card.spellKind, null, '魔法の種類はnull');
+      assertEq(card.species, null, '種族なし');
+      assertEq(card.atk, null, 'ATKなし');
+      assertEq(card.bodyText, [4, 5, 6, 7].map((r) => rec[r]).join(''), '効果テキストは無改行連結');
+      const credits = results.credits[card.index];
+      assertEq(credits[2].role, '罠の種類', '罠クレジットR3');
+      assertEq(credits[3].role, '効果テキスト①', '罠クレジットR4');
+    }
+    c1.close(); c2.close();
+  } finally {
+    server.kill();
+  }
+}
+
+// ================================================================
 try {
   await scenarioA();
   await scenarioB();
   await scenarioC();
   await scenarioD();
+  await scenarioE();
 } catch (err) {
   failed++;
   console.error('✗ シナリオ実行エラー:', err.message);

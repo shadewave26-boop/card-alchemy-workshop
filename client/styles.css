@@ -344,9 +344,40 @@ body {
   background: rgba(23, 16, 7, 0.94);
   backdrop-filter: blur(8px);
   border: 1px solid var(--panel-border);
+  border-top: 4px solid var(--card-c, var(--gold));
   border-radius: 12px;
   padding: 10px 12px;
   margin-bottom: 14px;
+}
+
+/* ---------- 担当カードの種別カラーを画面アクセントに反映 ----------
+   ヘッダー上端の帯・進捗バー・種族/種類チップ・資料パネルの縁が
+   カード色（通常=ベージュ/効果=橙茶/融合=紫/魔法=青緑/罠=ローズ紫）に変わる */
+.game-round.ct-normal { --card-c: #d3b96e; --card-c-soft: rgba(211, 185, 110, 0.2); }
+.game-round.ct-effect { --card-c: #c07a45; --card-c-soft: rgba(192, 122, 69, 0.22); }
+.game-round.ct-fusion { --card-c: #a385c6; --card-c-soft: rgba(163, 133, 198, 0.22); }
+.game-round.ct-spell { --card-c: #2f8a6b; --card-c-soft: rgba(47, 138, 107, 0.24); }
+.game-round.ct-trap { --card-c: #a93d91; --card-c-soft: rgba(169, 61, 145, 0.24); }
+
+.game-round .progress-fill {
+  background: linear-gradient(90deg, var(--card-c, #b8903c), var(--gold-bright));
+}
+
+.game-round .species-chip {
+  background: var(--card-c-soft, rgba(216, 180, 90, 0.12));
+  border: 1px solid var(--card-c, transparent);
+}
+
+.game-round .card-no { border-color: var(--card-c, var(--panel-border)); }
+
+.game-round .prev-panel { border-left: 6px solid var(--card-c, #b8a06a); }
+
+.game-round .round-title::before {
+  content: "◆";
+  margin-right: 0.4em;
+  font-size: 0.7em;
+  vertical-align: 0.15em;
+  color: var(--card-c, var(--gold));
 }
 
 .round-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -364,7 +395,8 @@ body {
 .type-chip.type-normal { background: #d3b96e; }
 .type-chip.type-effect { background: #c07a45; color: #fff7e8; }
 .type-chip.type-fusion { background: #a385c6; color: #fff7e8; }
-.type-chip.type-spell { background: #9fbf8f; }
+.type-chip.type-spell { background: #2f8a6b; color: #eafff5; }
+.type-chip.type-trap { background: #a93d91; color: #ffeefb; }
 
 .progress-track {
   height: 5px;
@@ -498,7 +530,8 @@ body {
 
 .attr-chip.is-selected { border-color: #fff; box-shadow: 0 0 0 3px rgba(216, 180, 90, 0.6); }
 
-.attr-spell { background: radial-gradient(circle at 35% 30%, #8fd9a8, #1d7a4e); }
+.attr-spell { background: radial-gradient(circle at 35% 30%, #6fcfae, #176a52); }
+.attr-trap { background: radial-gradient(circle at 35% 30%, #e090cc, #7c2a6a); }
 .attr-dark { background: radial-gradient(circle at 35% 30%, #6a4a9e, #2c1b4e); }
 .attr-light { background: radial-gradient(circle at 35% 30%, #ffe9a3, #c99f2a); color: #4a3808; text-shadow: none; }
 .attr-earth { background: radial-gradient(circle at 35% 30%, #b98d5f, #6b4a26); }
@@ -527,10 +560,10 @@ body {
 }
 
 .kind-chip.is-selected {
-  background: rgba(159, 191, 143, 0.25);
-  border-color: #9fbf8f;
-  color: #d9ecd0;
-  box-shadow: 0 0 0 2px rgba(159, 191, 143, 0.45);
+  background: rgba(216, 180, 90, 0.22);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  box-shadow: 0 0 0 2px rgba(216, 180, 90, 0.45);
 }
 
 .kind-note { font-size: 13px; color: var(--text-dim); margin: 8px 0 0; }
@@ -700,11 +733,12 @@ body.no-select * {
   box-shadow: inset 0 0 0.55em rgba(60, 38, 8, 0.45);
 }
 
-/* 種別カラー: 通常=ベージュ / 効果=オレンジブラウン / 融合=紫 / 魔法=薄い緑 */
+/* 種別カラー: 通常=ベージュ / 効果=オレンジブラウン / 融合=紫 / 魔法=青緑 / 罠=ローズ紫 */
 .type-normal .tcg-inner { background: linear-gradient(168deg, #d6bd72, #bd9c4b 55%, #a8873c); }
 .type-effect .tcg-inner { background: linear-gradient(168deg, #c07a45, #a95f2d 55%, #96521f); }
 .type-fusion .tcg-inner { background: linear-gradient(168deg, #a385c6, #8a63a8 55%, #77519a); }
-.type-spell .tcg-inner { background: linear-gradient(168deg, #b7cfa9, #9cba8c 55%, #87a677); }
+.type-spell .tcg-inner { background: linear-gradient(168deg, #4aa183, #2f8a6b 55%, #1f6e54); }
+.type-trap .tcg-inner { background: linear-gradient(168deg, #bd63a8, #a93d91 55%, #8a2f77); }
 
 /* 名前バー: 枠色の上に載る半透明のエンボス板 */
 .tcg-head {
@@ -769,14 +803,14 @@ body.no-select * {
   flex-shrink: 0;
 }
 
-/* 魔法カード: レベル(★)位置の【魔法カード／○○】表記（右寄せ） */
+/* 魔法・罠カード: レベル(★)位置の【魔法カード／○○】【罠カード／○○】表記（右寄せ） */
 .tcg-spelltype {
   font-size: 0.72em;
   font-weight: 800;
   letter-spacing: 0.02em;
   line-height: 1.3;
-  color: #23301c;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: #1c1210;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 /* イラスト: 左右に枠色の余白を残した額装風の窓 */

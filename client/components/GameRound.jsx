@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CARD_TYPE_LABEL, ATTRIBUTES, SPELL_KINDS, LIMITS } from '../../shared/constants.js';
+import { CARD_TYPE_LABEL, ATTRIBUTES, LIMITS } from '../../shared/constants.js';
 import { useServerCountdown } from '../hooks.js';
 import { sfx, unlockAudio } from '../audio.js';
 import DrawingCanvas from './DrawingCanvas.jsx';
@@ -42,12 +42,14 @@ function VisiblePanel({ round }) {
     );
   }
   if (round.round === 4) {
-    // 魔法カード: ラウンド3の成果物は「魔法の種類」
-    if (visible.spellKind) {
+    // 魔法・罠カード: ラウンド3の成果物は「種類」
+    if (visible.spellKind || visible.trapKind) {
+      const label = visible.spellKind ? '魔法カード' : '罠カード';
+      const kind = visible.spellKind || visible.trapKind;
       return (
         <div className="prev-panel">
-          <p className="prev-label">決定した魔法の種類</p>
-          <p className="prev-text prev-name">【魔法カード／{visible.spellKind}】</p>
+          <p className="prev-label">決定した{label.replace('カード', '')}の種類</p>
+          <p className="prev-text prev-name">【{label}／{kind}】</p>
         </div>
       );
     }
@@ -78,13 +80,15 @@ function VisiblePanel({ round }) {
 /** ラウンド8用: 完成カードの全情報 */
 function FullCardInfo({ card }) {
   if (!card) return null;
-  const isSpell = card.cardType === 'spell';
+  const kindLine = card.cardType === 'spell'
+    ? `【魔法カード／${card.spellKind}】`
+    : card.cardType === 'trap' ? `【罠カード／${card.trapKind}】` : null;
   return (
     <div className="prev-panel fullinfo">
       <p className="prev-label">完成したカード情報（これを参考に描こう！）</p>
       <p className="fullinfo-name">{card.name}</p>
-      {isSpell ? (
-        <p className="fullinfo-species">【魔法カード／{card.spellKind}】</p>
+      {kindLine ? (
+        <p className="fullinfo-species">{kindLine}</p>
       ) : (
         <>
           <div className="stats-grid-view">
@@ -102,10 +106,12 @@ function FullCardInfo({ card }) {
   );
 }
 
-/** ラウンド3(魔法カード): 魔法の種類の選択 */
-function SpellKindInput({ round, api, busy, onSubmit }) {
+/** ラウンド3(魔法・罠カード): 種類の選択（選択肢はサーバーのspecから受け取る） */
+function KindSelectInput({ round, api, busy, onSubmit }) {
+  const options = round.spec.options || [];
+  const cardLabel = round.spec.cardLabel || 'カード';
   const [kind, setKind] = useState(
-    typeof round.draft === 'string' && SPELL_KINDS.includes(round.draft) ? round.draft : '通常'
+    typeof round.draft === 'string' && options.includes(round.draft) ? round.draft : options[0] || '通常'
   );
 
   // 選択をdebounceして下書き保存（時間切れ時は最新の選択が自動提出される）
@@ -119,9 +125,9 @@ function SpellKindInput({ round, api, busy, onSubmit }) {
 
   return (
     <div className="input-area">
-      <p className="field-label">魔法の種類</p>
-      <div className="kind-row" role="radiogroup" aria-label="魔法の種類">
-        {SPELL_KINDS.map((k) => (
+      <p className="field-label">{round.spec.title}</p>
+      <div className="kind-row" role="radiogroup" aria-label={round.spec.title}>
+        {options.map((k) => (
           <button
             key={k}
             type="button"
@@ -134,7 +140,7 @@ function SpellKindInput({ round, api, busy, onSubmit }) {
           </button>
         ))}
       </div>
-      <p className="kind-note">カードには 【魔法カード／{kind}】 と表記されます</p>
+      <p className="kind-note">カードには 【{cardLabel}／{kind}】 と表記されます</p>
       <button type="button" className="btn btn-primary btn-block" disabled={busy} onClick={() => onSubmit(kind)}>
         {busy ? '送信中…' : 'これで提出する'}
       </button>
@@ -394,7 +400,8 @@ export default function GameRound({ api, round, progress }) {
   }, [spec.input]);
 
   return (
-    <div className={`game-round ${drawingClass}`}>
+    /* ct-種別クラス: 画面のアクセント色を担当カードのカード色に合わせる */
+    <div className={`game-round ct-${round.cardType} ${drawingClass}`}>
       {/* stickyヘッダー: キーボード表示中も工程と残り時間が見える */}
       <div className="round-header">
         <div className="round-meta">
@@ -411,8 +418,10 @@ export default function GameRound({ api, round, progress }) {
         <div className="card-meta-row">
           <span className="card-no">カード No.{round.cardNo}</span>
           {round.cardType === 'spell' ? (
-            /* 魔法カード: 種族の代わりに魔法の種類（R3で決定するまでは？？？） */
+            /* 魔法・罠カード: 種族の代わりに種類（R3で決定するまでは？？？） */
             <span className="species-chip">魔法／{round.spellKind || '？？？'}</span>
+          ) : round.cardType === 'trap' ? (
+            <span className="species-chip">罠／{round.trapKind || '？？？'}</span>
           ) : (
             <span className="species-chip">{round.species}</span>
           )}
@@ -430,8 +439,8 @@ export default function GameRound({ api, round, progress }) {
           <Waiting progress={progress} remainMs={remainMs} />
         ) : spec.input === 'stats' ? (
           <StatsInput key={round.round} round={round} api={api} busy={busy} onSubmit={submit} />
-        ) : spec.input === 'spellKind' ? (
-          <SpellKindInput key={round.round} round={round} api={api} busy={busy} onSubmit={submit} />
+        ) : spec.input === 'kindSelect' ? (
+          <KindSelectInput key={round.round} round={round} api={api} busy={busy} onSubmit={submit} />
         ) : spec.input === 'drawing' ? (
           <DrawingInput key={round.round} round={round} api={api} busy={busy} remainMs={remainMs} onSubmit={submit} />
         ) : (
